@@ -9,8 +9,10 @@ class AXCallScheduler {
     private let lock = NSLock()
     private var keyStates = [String: KeyState]()
     private var unresponsivePids = Set<pid_t>()
+    private var lastPruneTime: UInt64 = 0
 
     private static let throttleDelayNs: UInt64 = 200_000_000
+    private static let pruneIntervalNs: UInt64 = 10_000_000_000
     private static let giveUpAfterSeconds: Float = 60.0
     private static let backoffStepsNs: [UInt64] = [200_000_000, 1_000_000_000, 2_000_000_000, 5_000_000_000]
 
@@ -39,6 +41,7 @@ class AXCallScheduler {
 
     func schedule(key: String, file: String = #file, function: String = #function, line: Int = #line, context: String = "", pid: pid_t? = nil, block: @escaping () throws -> Void) {
         lock.lock()
+        pruneIdleEntriesIfNeeded()
         var state = keyStates[key] ?? KeyState()
         switch state.phase {
         case .idle:
@@ -98,6 +101,18 @@ class AXCallScheduler {
         lock.lock()
         unresponsivePids.remove(pid)
         lock.unlock()
+    }
+
+    /// caller must hold `lock`. Idle entries past the throttle window behave exactly like absent ones, so dropping them keeps throttle semantics while bounding keys never passed to `removeEntry` (e.g. sub-win-*, sub-app-*)
+    private func pruneIdleEntriesIfNeeded() {
+        let now = DispatchTime.now().uptimeNanoseconds
+        guard now - lastPruneTime >= Self.pruneIntervalNs else { return }
+        lastPruneTime = now
+        keyStates = keyStates.filter { !Self.isPrunable($0.value, now) }
+    }
+
+    private static func isPrunable(_ state: KeyState, _ now: UInt64) -> Bool {
+        state.phase == .idle && state.pendingBlock == nil && state.lastExecutionTime + throttleDelayNs <= now
     }
 
     private func queueForPid(_ pid: pid_t?) -> LabeledOperationQueue {
