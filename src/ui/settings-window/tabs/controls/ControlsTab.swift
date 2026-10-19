@@ -435,6 +435,20 @@ class ControlsTab {
     }
 
     private static func refreshShortcutRows() {
+        guard shortcutRows.count != Preferences.shortcutCount else { return updateShortcutRowsContent() }
+        rebuildShortcutRows()
+    }
+
+    // 输入法切换等高频触发只刷新文案，行数变化时才重建视图
+    private static func updateShortcutRowsContent() {
+        shortcutRows.enumerated().forEach { index, row in
+            row.setContent(shortcutTitle(index), shortcutSummary(index))
+            row.setSelected(index == selectedShortcutIndex && selectedShortcutIndex != gestureSelectionIndex)
+        }
+        syncShortcutSidebarHoverState()
+    }
+
+    private static func rebuildShortcutRows() {
         guard let rows = shortcutRowsStackView else { return }
         setHoveredShortcutRow(nil)
         clearArrangedSubviews(rows)
@@ -444,7 +458,8 @@ class ControlsTab {
             row.setContent(shortcutTitle(index), shortcutSummary(index))
             row.setSelected(index == selectedShortcutIndex && selectedShortcutIndex != gestureSelectionIndex)
             row.onClick = { _, _ in selectShortcut(index) }
-            row.onMouseEntered = { _, _ in setHoveredShortcutRow(row) }
+            // 用回调传入的 view，不捕获 row 本身，避免 row → 闭包 → row 循环引用导致重建时旧行无法释放
+            row.onMouseEntered = { _, view in setHoveredShortcutRow(view as? ShortcutSidebarRow) }
             row.onMouseExited = { _, _ in setHoveredShortcutRow(nil) }
             rows.addArrangedSubview(row)
             row.widthAnchor.constraint(equalTo: rows.widthAnchor).isActive = true
