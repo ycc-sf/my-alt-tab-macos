@@ -1,19 +1,5 @@
-<div align = center>
+# my-alt-tab-macos（已迁移）
 
-# AltTab
+本仓库不再更新，代码已迁到 [ycc-sf/ai-agent-instructions](https://github.com/ycc-sf/ai-agent-instructions) 的 [`tools/my-alt-tab-macos/`](https://github.com/ycc-sf/ai-agent-instructions/tree/main/tools/my-alt-tab-macos)。
 
-[![Screenshot](docs/public/demo/frontpage.jpg)](docs/public/demo/frontpage.jpg)
-
-**AltTab** brings the power of Windows alt-tab to macOS
-
-[Official website](https://alt-tab.app/)<br/><sub>15K stars</sub> | [Download](https://github.com/lwouis/alt-tab-macos/releases/download/v10.12.0/AltTab-10.12.0.zip)<br/><sub>7.4M downloads</sub>
--|-
-
-<div align="right">
-  <p>Project supported by</p>
-  <a href="https://jb.gg/OpenSource">
-    <img src="docs/public/demo/jetbrains.svg" alt="Jetbrains" width="149" height="32">
-  </a>
-</div>
-
-</div>
+迁移前的完整代码见本仓库 git 历史。
